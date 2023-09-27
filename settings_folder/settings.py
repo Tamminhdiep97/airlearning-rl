@@ -4,7 +4,7 @@ import machine_dependent_settings as mds
 
 
 # ---------------------------
-# imports 
+# imports
 # ---------------------------
 # Augmenting the sys.path with relavant folders
 settings_file_path = os.path.realpath(__file__)
@@ -95,7 +95,6 @@ medium_range_dic = {"End": zone_dic["End"] * ["Mutable"],
 hard_range_dic = {"End": zone_dic["End"] * ["Mutable"],
                   "MinimumDistance": [4],
                   "EnvType": ["Indoor"],
-                  "EnvType": ["Indoor"],
                   "ArenaSize": [[30, 30, 10]],
                   "PlayerStart": [[0, 0, 0]],
                   "NumberOfDynamicObjects": list(range(6, 10)),
@@ -126,13 +125,13 @@ environment_change_frequency = {"Seed": 1, "NumberOfObjects": 10, "End": 1}
 
 # ------------------------------------------------------------
 #                               -Drone related-
-## ------------------------------------------------------------
-#ip = '10.243.49.243'
+# # ------------------------------------------------------------
+# ip = '10.243.49.243'
 ip = '127.0.0.1'
 
-#---------------------------
+# ---------------------------
 # PPO
-#---------------------------
+# ---------------------------
 
 # drone controls
 duration_ppo = 0.3
@@ -230,24 +229,24 @@ ease_constant = 10  # used when not meeting a zone for window_restart_ctr_thresh
 use_preloaded_json = False
 meta_data_folder = "C:\workspace\zone2"
 
-#--------------------------------
+# --------------------------------
 # profiling
-#--------------------------------
+# --------------------------------
 
 profile = True
 
 
-#--------------------------------
+# --------------------------------
 # Unreal game settings
-#--------------------------------
+# --------------------------------
 game_resX = 640
 game_resY = 480
 ue4_winX = 640
 ue4_winY = 480
 
-#--------------------------------
+# --------------------------------
 # Multi-Modal Input settings
-#--------------------------------
+# --------------------------------
 concatenate_inputs = True
 encoded_depth = True
 position = True

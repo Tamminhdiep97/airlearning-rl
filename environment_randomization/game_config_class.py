@@ -82,4 +82,4 @@ class GameConfig:
         return dic
 
     def get(self):
-        return self.config_data;
+        return self.config_data

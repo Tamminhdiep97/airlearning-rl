@@ -6,6 +6,7 @@ import random
 import utils
 from file_handling import *
 
+
 class GameConfigHandler:
     def __init__(self, range_dic=eval("settings.default_range_dic"), zone_dic=eval("settings.zone_dic"),
                  input_file_addr=settings.json_file_addr):
