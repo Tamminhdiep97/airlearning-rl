@@ -32,16 +32,16 @@ def setup(difficulty_level='default', env_name = "AirSimEnv-v42"):
     set_session(tf.Session(config=config))
 
     # Get the environment and extract the number of actions.
-    #msgs.algo = "DQN"
+    # msgs.algo = "DQN"
     env = gym.make(env_name)
     env.init_again(eval("settings."+difficulty_level+"_range_dic"))
-    env.airgym.unreal_reset() #must rest so the env accomodate the changes
+    env.airgym.unreal_reset()  # must rest so the env accomodate the changes
     time.sleep(5)
 
     np.random.seed(123)
     env.seed(123)
     nb_actions = env.action_space.n
-    
+
     WINDOW_LENGTH = 1
     depth_shape = env.depth.shape
     vel_shape = env.velocity.shape
@@ -141,12 +141,11 @@ def setup(difficulty_level='default', env_name = "AirSimEnv-v42"):
                    enable_dueling_network=False, dueling_type='avg',
                    target_model_update=1e-2, policy=policy, gamma=.99)
 
-
-    
     dqn.compile(Adam(lr=0.00025), metrics=['mae'])
 
     # Load the check-point weights and start training from there
-    return dqn,env
+    return dqn, env
+
 
 def train(dqn, env, train_checkpoint=False):
     msgs.mode = 'train'
@@ -173,6 +172,7 @@ def train(dqn, env, train_checkpoint=False):
     # After training is done, we save the final weights.
     dqn.save_weights(weights_filename.format(""), overwrite=True)
 
+
 def test(dqn, env, file_path):
     # dqn.load_weights('checkpoints/DQN/level-3/dqn_level_3_weights_117000.hf5'.format(args.env_name))
     callbacks = [CheckPointLogger()]
@@ -185,6 +185,6 @@ def test(dqn, env, file_path):
 
 
 if __name__ == '__main__':
-    dqn,env= setup()
-    test(dqn, env,["C:/blah2/dqn_level_3.hf5"])
+    dqn, env = setup()
+    test(dqn, env, ["C:/blah2/dqn_level_3.hf5"])
 

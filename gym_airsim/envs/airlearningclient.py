@@ -12,7 +12,6 @@ from pylab import array, uint8, arange
 import msgs
 
 
-
 class AirLearningClient(airsim.MultirotorClient):
     def __init__(self):
 
@@ -59,26 +58,28 @@ class AirLearningClient(airsim.MultirotorClient):
         return concat_state
 
     def getScreenGrey(self):
-        responses = self.client.simGetImages([airsim.ImageRequest("1", airsim.ImageType.Scene, False, False)])
+        responses = self.client.simGetImages([airsim.ImageRequest("1", airsim.ImageType.Scene)])
         response = responses[0]
         img1d = np.fromstring(response.image_data_uint8, dtype=np.uint8)
-        if((responses[0].width !=0 or responses[0].height!=0)):
+        if ((responses[0].width != 0 or responses[0].height != 0)):
             img_rgba = img1d.reshape(response.height, response.width, 4)
             rgb = cv2.cvtColor(img_rgba, cv2.COLOR_BGRA2BGR)
             grey = cv2.cvtColor(rgb, cv2.COLOR_BGR2GRAY)
         else:
             print("Something bad happened! Restting AirSim!")
             self.AirSim_reset()
-            grey = np.ones(144,256)
+            grey = np.ones(144, 256)
         return grey
 
     def getScreenRGB(self):
         responses = self.client.simGetImages([airsim.ImageRequest("1", airsim.ImageType.Scene, False, False)])
         response = responses[0]
         img1d = np.fromstring(response.image_data_uint8, dtype=np.uint8)
+
         if ((responses[0].width != 0 or responses[0].height != 0)):
             img_rgba = img1d.reshape(response.height, response.width, 4)
             rgb = cv2.cvtColor(img_rgba, cv2.COLOR_BGRA2BGR)
+            # rgb = img1d.reshape(response.height, response.width, 3)
         else:
             print("Something bad happened! Restting AirSim!")
             self.AirSim_reset()
@@ -86,18 +87,19 @@ class AirLearningClient(airsim.MultirotorClient):
         return rgb
 
     def getScreenDepthVis(self, track):
+        responses = self.client.simGetImages(
+            [airsim.ImageRequest(0, airsim.ImageType.DepthPerspective, True, False)]
+        )
+        # responses = self.client.simGetImages([airsim.ImageRequest("0", airsim.ImageType.DepthVis,True, False)])
 
-        responses = self.client.simGetImages([airsim.ImageRequest(0, airsim.ImageType.DepthPerspective, True, False)])
-        #responses = self.client.simGetImages([airsim.ImageRequest("0", airsim.ImageType.DepthVis,True, False)])
-
-        if(responses == None):
+        if (responses is None):
             print("Camera is not returning image!")
             print("Image size:"+str(responses[0].height)+","+str(responses[0].width))
         else:
             img1d = np.array(responses[0].image_data_float, dtype=np.float)
 
         img1d = 255 / np.maximum(np.ones(img1d.size), img1d)
-        if((responses[0].width!=0 or responses[0].height!=0)):
+        if ((responses[0].width != 0 or responses[0].height != 0)):
             img2d = np.reshape(img1d, (responses[0].height, responses[0].width))
 
         else:
@@ -123,7 +125,9 @@ class AirLearningClient(airsim.MultirotorClient):
         info_section = np.zeros((10, small.shape[1]), dtype=np.uint8) + 255
         info_section[9, :] = 0
 
-        line = np.int((((track - -180) * (small.shape[1] - 0)) / (180 - -180)) + 0)
+        line = np.int(
+            (((track - -180) * (small.shape[1] - 0)) / (180 - -180)) + 0
+        )
         '''
         print("\n")
         print("Track:"+str(track))
@@ -145,10 +149,10 @@ class AirLearningClient(airsim.MultirotorClient):
             info_section[:, info_section.shape[1] - 3:info_section.shape[1]] = 0
 
         total = np.concatenate((info_section, small), axis=0)
-        #cv2.imwrite("test.png",total)
+        # cv2.imwrite("test.png", total)
         # cv2.imshow("Test", total)
         # cv2.waitKey(0)
-        #total = np.reshape(total, (154,256))
+        # total = np.reshape(total, (154,256))
         return total
 
     def drone_pos(self):
@@ -169,7 +173,7 @@ class AirLearningClient(airsim.MultirotorClient):
         now = self.client.getPosition()
         xdistance = (goal[0] - now.x_val)
         ydistance = (goal[1] - now.y_val)
-        euclidean = np.sqrt(np.power(xdistance,2) + np.power(ydistance,2))
+        euclidean = np.sqrt(np.power(xdistance, 2) + np.power(ydistance, 2))
 
         return np.array([xdistance, ydistance, euclidean])
 
@@ -182,16 +186,25 @@ class AirLearningClient(airsim.MultirotorClient):
         self.client.enableApiControl(True)
         self.client.armDisarm(True)
         time.sleep(0.2)
-        self.client.moveByVelocityAsync(0, 0, -5, 2, drivetrain=0, vehicle_name='').join()
-        self.client.moveByVelocityAsync(0, 0, 0, 1, drivetrain=0, vehicle_name='').join()
+        self.client.moveByVelocityAsync(
+            0, 0, -5, 2, drivetrain=0, vehicle_name=''
+        ).join()
+        self.client.moveByVelocityAsync(
+            0, 0, 0, 1, drivetrain=0, vehicle_name=''
+        ).join()
 
     def unreal_reset(self):
+        # time.sleep(.1)
         self.client, connection_established = self.client.resetUnreal()
+        # self.client.call('resetUnreal')
+        # time.sleep(.1)
+        # connection_established = airsim.MultirotorClient(ip=settings.ip)
+        # connection_established.enableApiControl(True)
         return connection_established
 
     def take_continious_action(self, action):
 
-        if(msgs.algo == 'DDPG'):
+        if (msgs.algo == 'DDPG'):
             pitch = action[0]
             roll = action[1]
             throttle = action[2]
@@ -199,9 +212,9 @@ class AirLearningClient(airsim.MultirotorClient):
             duration = action[4]
             self.client.moveByAngleThrottleAsync(pitch, roll, throttle, yaw_rate, duration, vehicle_name='').join()
         else:
-            #pitch = np.clip(action[0], -0.261, 0.261)
-            #roll = np.clip(action[1], -0.261, 0.261)
-            #yaw_rate = np.clip(action[2], -3.14, 3.14)
+            # pitch = np.clip(action[0], -0.261, 0.261)
+            # roll = np.clip(action[1], -0.261, 0.261)
+            # yaw_rate = np.clip(action[2], -3.14, 3.14)
             if(settings.move_by_velocity):
                 vx = np.clip(action[0], -1.0, 1.0)
                 vy = np.clip(action[1], -1.0, 1.0)
@@ -218,13 +231,13 @@ class AirLearningClient(airsim.MultirotorClient):
 
         return collided
 
-        #Todo : Stabilize drone
-        #self.client.moveByAngleThrottleAsync(0, 0,1,0,2).join()
+        # TODO : Stabilize drone
+        # self.client.moveByAngleThrottleAsync(0, 0,1,0,2).join()
 
-        #TODO: Get the collision info and use that to reset the simuation.
-        #TODO: Put some sleep in between the calls so as not to crash on the same lines as DQN
+        # TODO: Get the collision info and use that to reset the simuation.
+        # TODO: Put some sleep in between the calls so as not to crash on the same lines as DQN
     def straight(self, speed, duration):
-        pitch, roll, yaw  = self.client.getPitchRollYaw()
+        pitch, roll, yaw = self.client.getPitchRollYaw()
         vx = math.cos(yaw) * speed
         vy = math.sin(yaw) * speed
         self.client.moveByVelocityZAsync(vx, vy, self.z, duration, 1).join()
@@ -252,38 +265,38 @@ class AirLearningClient(airsim.MultirotorClient):
         return start, duration
 
     def pitch_up(self, duration):
-        self.client.moveByVelocityZAsync(0.5,0,1,duration,0).join()
+        self.client.moveByVelocityZAsync(0.5, 0, 1, duration, 0).join()
         start = time.time()
         return start, duration
 
     def pitch_down(self, duration):
-        self.client.moveByVelocityZAsync(0.5,0.5,self.z,duration,0).join()
+        self.client.moveByVelocityZAsync(0.5, 0.5, self.z, duration, 0).join()
         start = time.time()
         return start, duration
 
-    def move_forward_Speed(self, speed_x = 0.5, speed_y = 0.5, duration = 0.5):
-        pitch, roll, yaw  = self.client.getPitchRollYaw()
+    def move_forward_Speed(self, speed_x=0.5, speed_y=0.5, duration=0.5):
+        pitch, roll, yaw = self.client.getPitchRollYaw()
         vel = self.client.getVelocity()
         vx = math.cos(yaw) * speed_x - math.sin(yaw) * speed_y
         vy = math.sin(yaw) * speed_x + math.cos(yaw) * speed_y
         if speed_x <= 0.01:
             drivetrain = 0
-            #yaw_mode = YawMode(is_rate= True, yaw_or_rate = 0)
+            # yaw_mode = YawMode(is_rate= True, yaw_or_rate = 0)
         elif speed_x > 0.01:
             drivetrain = 0
-            #yaw_mode = YawMode(is_rate= False, yaw_or_rate = 0)
-        self.client.moveByVelocityZAsync(vx = (vx +vel.x_val)/2 ,
-                             vy = (vy +vel.y_val)/2 , #do this to try and smooth the movement
-                             z = self.z,
-                             duration = duration,
-                             drivetrain = drivetrain,
-                            ).join()
+            # yaw_mode = YawMode(is_rate= False, yaw_or_rate = 0)
+        self.client.moveByVelocityZAsync(
+            vx=(vx+vel.x_val)/2,
+            vy=(vy+vel.y_val)/2,  # do this to try and smooth the movement
+            z=self.z,
+            duration=duration,
+            drivetrain=drivetrain,
+        ).join()
         start = time.time()
         return start, duration
 
     def take_discrete_action(self, action):
-
-       # check if copter is on level cause sometimes he goes up without a reason
+        # check if copter is on level cause sometimes he goes up without a reason
         """
         x = 0
         while self.client.getPosition().z_val < -7.0:
@@ -299,55 +312,105 @@ class AirLearningClient(airsim.MultirotorClient):
         """
 
         if action == 0:
-            start, duration = self.straight(settings.mv_fw_spd_5, settings.mv_fw_dur)
+            start, duration = self.straight(
+                settings.mv_fw_spd_5, settings.mv_fw_dur
+            )
         if action == 1:
-            start, duration = self.straight(settings.mv_fw_spd_4, settings.mv_fw_dur)
+            start, duration = self.straight(
+                settings.mv_fw_spd_4, settings.mv_fw_dur
+            )
         if action == 2:
-            start, duration = self.straight(settings.mv_fw_spd_3, settings.mv_fw_dur)
+            start, duration = self.straight(
+                settings.mv_fw_spd_3, settings.mv_fw_dur
+            )
         if action == 3:
-            start, duration = self.straight(settings.mv_fw_spd_2, settings.mv_fw_dur)
+            start, duration = self.straight(
+                settings.mv_fw_spd_2, settings.mv_fw_dur
+            )
         if action == 4:
-            start, duration = self.straight(settings.mv_fw_spd_1, settings.mv_fw_dur)
+            start, duration = self.straight(
+                settings.mv_fw_spd_1, settings.mv_fw_dur
+            )
         if action == 5:
-            start, duration = self.move_forward_Speed(settings.mv_fw_spd_5, settings.mv_fw_spd_5, settings.mv_fw_dur)
+            start, duration = self.move_forward_Speed(
+                settings.mv_fw_spd_5, settings.mv_fw_spd_5, settings.mv_fw_dur
+            )
         if action == 6:
-            start, duration = self.move_forward_Speed(settings.mv_fw_spd_4, settings.mv_fw_spd_4, settings.mv_fw_dur)
+            start, duration = self.move_forward_Speed(
+                settings.mv_fw_spd_4, settings.mv_fw_spd_4, settings.mv_fw_dur
+            )
         if action == 7:
-            start, duration = self.move_forward_Speed(settings.mv_fw_spd_3, settings.mv_fw_spd_3, settings.mv_fw_dur)
+            start, duration = self.move_forward_Speed(
+                settings.mv_fw_spd_3, settings.mv_fw_spd_3, settings.mv_fw_dur
+            )
         if action == 8:
-            start, duration = self.move_forward_Speed(settings.mv_fw_spd_2, settings.mv_fw_spd_2, settings.mv_fw_dur)
+            start, duration = self.move_forward_Speed(
+                settings.mv_fw_spd_2, settings.mv_fw_spd_2, settings.mv_fw_dur
+            )
         if action == 9:
-            start, duration = self.move_forward_Speed(settings.mv_fw_spd_1, settings.mv_fw_spd_1, settings.mv_fw_dur)
+            start, duration = self.move_forward_Speed(
+                settings.mv_fw_spd_1, settings.mv_fw_spd_1, settings.mv_fw_dur
+            )
         if action == 10:
-            start, duration = self.backup(settings.mv_fw_spd_5, settings.mv_fw_dur)
+            start, duration = self.backup(
+                settings.mv_fw_spd_5, settings.mv_fw_dur
+            )
         if action == 11:
-            start, duration = self.backup(settings.mv_fw_spd_4, settings.mv_fw_dur)
+            start, duration = self.backup(
+                settings.mv_fw_spd_4, settings.mv_fw_dur
+            )
         if action == 12:
-            start, duration = self.backup(settings.mv_fw_spd_3, settings.mv_fw_dur)
+            start, duration = self.backup(
+                settings.mv_fw_spd_3, settings.mv_fw_dur
+            )
         if action == 13:
-            start, duration = self.backup(settings.mv_fw_spd_2, settings.mv_fw_dur)
+            start, duration = self.backup(
+                settings.mv_fw_spd_2, settings.mv_fw_dur
+            )
         if action == 14:
-            start, duration = self.backup(settings.mv_fw_spd_1, settings.mv_fw_dur)
+            start, duration = self.backup(
+                settings.mv_fw_spd_1, settings.mv_fw_dur
+            )
         if action == 15:
-            start, duration = self.yaw_right(settings.yaw_rate_1_1, settings.rot_dur)
+            start, duration = self.yaw_right(
+                settings.yaw_rate_1_1, settings.rot_dur
+            )
         if action == 16:
-            start, duration = self.yaw_right(settings.yaw_rate_1_2, settings.rot_dur)
+            start, duration = self.yaw_right(
+                settings.yaw_rate_1_2, settings.rot_dur
+            )
         if action == 17:
-            start, duration = self.yaw_right(settings.yaw_rate_1_4, settings.rot_dur)
+            start, duration = self.yaw_right(
+                settings.yaw_rate_1_4, settings.rot_dur
+            )
         if action == 18:
-            start, duration = self.yaw_right(settings.yaw_rate_1_8, settings.rot_dur)
+            start, duration = self.yaw_right(
+                settings.yaw_rate_1_8, settings.rot_dur
+            )
         if action == 19:
-            start, duration = self.yaw_right(settings.yaw_rate_1_16, settings.rot_dur)
+            start, duration = self.yaw_right(
+                settings.yaw_rate_1_16, settings.rot_dur
+            )
         if action == 20:
-            start, duration = self.yaw_right(settings.yaw_rate_2_1, settings.rot_dur)
+            start, duration = self.yaw_right(
+                settings.yaw_rate_2_1, settings.rot_dur
+            )
         if action == 21:
-            start, duration = self.yaw_right(settings.yaw_rate_2_2, settings.rot_dur)
+            start, duration = self.yaw_right(
+                settings.yaw_rate_2_2, settings.rot_dur
+            )
         if action == 22:
-            start, duration = self.yaw_right(settings.yaw_rate_2_4, settings.rot_dur)
+            start, duration = self.yaw_right(
+                settings.yaw_rate_2_4, settings.rot_dur
+            )
         if action == 23:
-            start, duration = self.yaw_right(settings.yaw_rate_2_8, settings.rot_dur)
+            start, duration = self.yaw_right(
+                settings.yaw_rate_2_8, settings.rot_dur
+            )
         if action == 24:
-            start, duration = self.yaw_right(settings.yaw_rate_2_16, settings.rot_dur)
+            start, duration = self.yaw_right(
+                settings.yaw_rate_2_16, settings.rot_dur
+            )
 
 
         collided = (self.client.getMultirotorState().trip_stats.collision_count > 0)

@@ -52,7 +52,13 @@ checkpoint_interval = 50000
 # ---------------------------
 # how many zones for each variable for the entire range. Note that frequency
 # of moving to a new zone is not determined here
-zone_dic = {"Seed": 1, "NumberOfDynamicObjects": 1, "MinimumDistance": 1, "VelocityRange": 1, "End": 4}  # pay attention
+zone_dic = {
+    "Seed": 42,
+    "NumberOfDynamicObjects": 5,
+    "MinimumDistance": 1,
+    "VelocityRange": 1,
+    "End": 4
+}  # pay attention
 
 # update_zone_success_threshold = 50
 acceptable_success_rate_to_update_zone = .3  # after what ration of success up the zone # pay attention
@@ -188,7 +194,7 @@ backup_folder_name_style = "bu_0"  # the backup obj will create a file with this
 # ---------------------------
 # general params
 # ---------------------------
-list_algo = ["DQN", "DDPG"]  # a new algo needs to be added to this list for backup to back up its results
+list_algo = ["DDPG"]  # ["DQN", "DDPG"]  # a new algo needs to be added to this list for backup to back up its results
 nb_max_episodes_steps = 750  # pay attention
 # assert(nb_max_episodes_steps > 16 )
 success_distance_to_goal = 3

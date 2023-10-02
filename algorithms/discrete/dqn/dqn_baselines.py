@@ -15,8 +15,8 @@ from stable_baselines.common.vec_env import DummyVecEnv
 from stable_baselines.deepq import DQN, MlpPolicy
 from stable_baselines.deepq.policies import MultiInputPolicy
 
-
 from keras.backend.tensorflow_backend import set_session
+
 
 def setup(difficulty_level='default', env_name = "AirSimEnv-v42"):
     config = tf.ConfigProto()
@@ -35,24 +35,28 @@ def setup(difficulty_level='default', env_name = "AirSimEnv-v42"):
 
     return env, agent
 
+
 def train(env, agent):
     # Train the agent
     agent.learn(total_timesteps=settings.training_steps_cap)
 
     agent.save()
+
+
 def test(env, agent, filepath):
     model = DQN.load(filepath)
     obs = env.reset()
     episode_count = 0
     while (True):
-        if(episode_count == settings.testing_nb_episodes_per_model):
+        if (episode_count == settings.testing_nb_episodes_per_model):
             exit(0)
         else:
             action, _states = model.predict(obs)
             obs, rewards, dones, info = env.step(action)
-            if(dones == True):
+            if (dones is True):
                 env.reset()
                 episode_count += 1
+
 
 if __name__ == "__main__":
     env, agent = setup()

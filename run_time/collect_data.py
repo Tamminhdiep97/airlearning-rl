@@ -7,7 +7,7 @@ import ddpg_airsim
 import dqn_airsim
 import dqn_baselines
 import ppo_airsim
-#import sac_airsim
+# import sac_airsim
 from game_handler_class import *
 import msgs
 import file_handling
@@ -32,8 +32,8 @@ def runTask(task):
             elif (task["algo"] == "DQN-B"):
                 train_class = dqn_baselines
                 msgs.algo = "DQN-B"
-            elif (task["algo"] == "SAC"):
-                train_class = sac_airsim
+            # elif (task["algo"] == "SAC"):
+            #     train_class = sac_airsim
         else:
             print("this algorithm is not supported")
             exit(0)
@@ -48,7 +48,7 @@ def runTask(task):
         if (task["algo"] == "DQN"):
             train_class.train(train_obj, env)
 
-        if(task["algo"] == "DQN-B"):
+        if (task["algo"] == "DQN-B"):
             train_class.train(train_obj, env)
 
         if (task["algo"] == "PPO"):
@@ -91,7 +91,7 @@ def main():
     model_weights_list_to_test = ["C:/workspace/airlearning-rl/data/PPO/zone0/0.hf5"]
 
     task1 = {"task_type": "start_game"}
-    task2 = {"algo": "DQN-B", "task_type": "train", "difficulty_level": "easy", "env_name": "AirSimEnv-v42",
+    task2 = {"algo": "DQN-B", "task_type": "train", "difficulty_level": "hard", "env_name": "AirSimEnv-v42",
              "weights": model_weights_list_to_test}
     taskList.append(task1)
     taskList.append(task2)

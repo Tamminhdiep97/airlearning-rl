@@ -54,7 +54,7 @@ class VehicleClient:
     def reset(self):
         self.client.call('reset')
 
-    def resetUnreal(self, sleep_time_before=.1, sleep_time_after=.1):
+    def resetUnreal(self, sleep_time_before=5, sleep_time_after=5):
         time.sleep(sleep_time_before)  # not sure why we need this, but sometimes
         # we do
         self.client.call('resetUnreal')
@@ -164,6 +164,10 @@ class VehicleClient:
     # camera control
     # simGetImage returns compressed png in array of bytes
     # image_type uses one of the ImageType members
+    # def simGetImages(self, requests, vehicle_name='', a='', b=''):
+    #     responses_raw = self.client.call('simGetImages', requests)
+    #     return [ImageResponse.from_msgpack(response_raw) for response_raw in responses_raw]
+
     def simGetImages(self, requests, vehicle_name=''):
         responses_raw = self.client.call('simGetImages', requests, vehicle_name)
         return [ImageResponse.from_msgpack(response_raw) for response_raw in responses_raw]

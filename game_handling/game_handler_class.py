@@ -24,15 +24,14 @@ class GameHandler:
         self.cmd = str('"'+ self.ue4_exe_path+ '"')+" "+str(self.game_file)+ str(self.ue4_params)
         assert(os.path.exists(self.ue4_exe_path)), "Unreal Editor executable:" + self.ue4_exe_path + "doesn't exist"
         assert(os.path.exists(self.game_file)), "game_file: " + self.game_file +  " doesn't exist"
-        #assert(os.path.exists(self.press_play_file)), "press_play file: " + self.press_play_file +  " doesn't exist"
-
+        # assert(os.path.exists(self.press_play_file)), "press_play file: " + self.press_play_file +  " doesn't exist"
 
     def start_game_in_editor(self):
         if not (settings.ip == '127.0.0.1'):
             print("can not start the game in a remote machine")
             exit(0)
 
-        if(os.name=="nt"):
+        if (os.name == "nt"):
             unreal_pids_before_launch = utils.find_process_id_by_name("UE4Editor.exe")
             subprocess.Popen(self.cmd, shell=True)
 
@@ -78,34 +77,34 @@ class GameHandler:
                 client = airsim.MultirotorClient(settings.ip)
                 pass
 
-        """ 
-		os.system(self.game_file)
-		time.sleep(30) 
-		os.system(self.press_play_file)
-		time.sleep(2)
-		"""
+        """
+        os.system(self.game_file)
+        time.sleep(30)
+        os.system(self.press_play_file)
+        time.sleep(2)
+        """
 
     def kill_game_in_editor(self):
         process1_exist = False
         process2_exist = False
         tasklist = []
 
-        if(os.name=="posix"):
+        if (os.name == "posix"):
             for each_proc in psutil.process_iter():
                 tasklist.append(each_proc.name())
 
-        if(os.name=="nt"):
+        if (os.name == "nt"):
             tasklist = os.popen("tasklist").readlines()
 
         for el in tasklist:
-            if(os.name=='nt'):
+            if (os.name == 'nt'):
                 if "UE4Editor.exe" in el.split():
                     process1_exist = True
                 if "CrashReportClient.exe" in el.split():
                     process2_exist = True
                 if (process1_exist and process2_exist):
                     break
-            if(os.name=="posix"):
+            if (os.name == "posix"):
                 if "UE4Editor" in el.split():
                     process1_exist = True
                 if "CrashReportClient" in el.split():
@@ -115,27 +114,27 @@ class GameHandler:
 
         if (settings.game_proc_pid == ''):  # if proc not provided, find any Unreal and kill
             if (process1_exist):
-                if(os.name=="nt"):
+                if (os.name == "nt"):
                     os.system("taskkill /f /im  " + "UE4Editor.exe")
 
-                if(os.name=="posix"):
-                    os.system("killall "+ "UE4Editor")
+                if (os.name == "posix"):
+                    os.system("killall " + "UE4Editor")
         else:
-            if(os.name=="nt"):
+            if (os.name == "nt"):
                 os.system("taskkill /f /pid  " + str(settings.game_proc_pid))
                 time.sleep(2)
                 settings.game_proc_pid = ''
 
-            if(os.name=="posix"):
+            if (os.name == "posix"):
                 os.system("kill " + str(settings.game_proc_pid))
                 time.sleep(2)
                 settings.game_proc_pid = ''
 
         if (process2_exist):
-            if(os.name=="nt"):
+            if (os.name == "nt"):
                 os.system("taskkill /f /im  " + "CrashReportClient.exe")
 
-            if(os.name=="posix"):
+            if (os.name == "posix"):
                 os.system("killall " + "CrashReportClient")
 
     def restart_game(self):
@@ -144,5 +143,5 @@ class GameHandler:
             exit(0)
         msgs.restart_game_count += 1
         self.kill_game_in_editor()  # kill in case there are any
-        time.sleep(2)
+        time.sleep(3)
         self.start_game_in_editor()

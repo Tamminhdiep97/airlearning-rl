@@ -1,4 +1,6 @@
-import os ,sys
+import os
+import sys
+import time
 
 import logging
 from settings_folder import settings
@@ -9,6 +11,7 @@ import msgs
 #from common import utils
 import json
 import copy
+import numpy as np
 import gym
 from gym import spaces
 from gym.utils import seeding
@@ -20,49 +23,48 @@ logger = logging.getLogger(__name__)
 
 
 def child_step(self, conn, airgym_obj):
-        collided = False
-        now = [0,0,0]
-        track = 0.0
-        old_depth = self.depth
-        old_position = self.position
-        old_velocity = self.velocity
-        try:
-            goal = [0,0,0]
-            collided = airgym_obj.take_discrete_action(action)
-            now = airgym_obj.drone_pos()
-            track = airgym_obj.goal_direction(goal, now)
-            self.depth = airgym_obj.getScreenDepthVis(track)
-            self.position = airgym_obj.get_distance(goal)
-            self.velocity = airgym_obj.drone_velocity()
-            excp_occured = False
-            conn.send([collided, now, track, self.depth, self.position, self.velocity, excp_occured])
-            conn.close()
-        except Exception as e:
-            print(str(e) + "occured in child step")
-            excp_occured = True
+    collided = False
+    now = [0, 0, 0]
+    track = 0.0
+    old_depth = self.depth
+    old_position = self.position
+    old_velocity = self.velocity
+    try:
+        goal = [0, 0, 0]
+        collided = airgym_obj.take_discrete_action(action)
+        now = airgym_obj.drone_pos()
+        track = airgym_obj.goal_direction(goal, now)
+        self.depth = airgym_obj.getScreenDepthVis(track)
+        self.position = airgym_obj.get_distance(goal)
+        self.velocity = airgym_obj.drone_velocity()
+        excp_occured = False
+        conn.send([collided, now, track, self.depth, self.position, self.velocity, excp_occured])
+        conn.close()
+    except Exception as e:
+        print(str(e) + "occured in child step")
+        excp_occured = True
 
-            conn.send([collided, now, track, old_depth, old_position, old_velocity, excp_occured])
-            conn.close()
-
+        conn.send([collided, now, track, old_depth, old_position, old_velocity, excp_occured])
+        conn.close()
 
 
 class AirSimEnv(gym.Env):
-    #3.6.8 (self.airgym = None
+    # 3.6.8 (self.airgym = None
 
     def __init__(self):
         # left depth, center depth, right depth, yaw
-        if(settings.concatenate_inputs):
+        if (settings.concatenate_inputs):
             STATE_POS = 3
-            #STATE_VEL = 3
+            # STATE_VEL = 3
             STATE_DEPTH_H, STATE_DEPTH_W = 154, 256
-            if(msgs.algo == "SAC"):
+            if (msgs.algo == "SAC"):
                 self.observation_space = spaces.Box(low=-100000, high=1000000, shape=(( 1, STATE_POS + STATE_DEPTH_H * STATE_DEPTH_W)))
             else:
                 self.observation_space = spaces.Box(low=-100000, high=1000000,
                                                     shape=((1, STATE_POS + STATE_DEPTH_H * STATE_DEPTH_W)))
         else:
             self.observation_space = spaces.Box(low=0, high=255, shape=(154, 256))
-            #self.observation_space = spaces.Box(low=0, high=255, shape=(144, 256, 3))
+            # self.observation_space = spaces.Box(low=0, high=255, shape=(144, 256, 3))
         '''
         self.observation_space = spaces.Dict({"rgb": spaces.Box(low = 0, high=255, shape=(144, 256, 3)),
                                               "depth": spaces.Box(low = 0, high=255, shape=(144, 256,1)),
@@ -115,17 +117,18 @@ class AirSimEnv(gym.Env):
         self.actions_in_step = []
         self.position_in_step = []
         self.distance_in_step = []
-        self.reward_in_step=[]
+        self.reward_in_step = []
         self.total_reward = 0
-        
+
+        print('msgs.algo:', msgs.algo)
         if(msgs.algo == "DDPG"):
             self.actor = ""
-            self.critic= ""
+            self.critic = ""
         else:
             self.model = ""
 
         # pitch, yaw and roll are in radians ( min : -45 deg, max: 45 deg)
-        if(msgs.algo == "DDPG "):
+        if (msgs.algo == "DDPG"):
             self.action_space = spaces.Box(np.array([-0.785, -0.785, -0.785]),
                                        np.array([+0.785, +0.785, +0.785]),
                                        dtype=np.float32)  # pitch, roll, yaw_rate
@@ -155,10 +158,11 @@ class AirSimEnv(gym.Env):
 
     def set_model(self, model):
         self.model = model
+
     def set_actor_critic(self, actor, critic):
         self.actor = actor
         self.critic = critic
-    
+
     # This function was introduced (instead of the body to be merged into
     # __init__ because I need difficulty level as an argument but I can't
     # touch __init__ number of arguments
@@ -184,7 +188,7 @@ class AirSimEnv(gym.Env):
         self.game_config_handler.populate_zones()
         self.sampleGameConfig()
         self.goal = utils.airsimize_coordinates(self.game_config_handler.get_cur_item("End"))
-        if(os.name=="nt"):
+        if (os.name == "nt"):
             self.airgym.unreal_reset()
         time.sleep(5)
 
@@ -203,7 +207,7 @@ class AirSimEnv(gym.Env):
             return self.concat_state
         else:
             return self.depth, self.velocity, self.position
-    
+
     def _seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
         return [seed]
@@ -218,12 +222,13 @@ class AirSimEnv(gym.Env):
 
         # check if you are too close to the goal, if yes, you need to reduce the yaw and speed
         if distance_now < settings.slow_down_activation_distance:
-            yaw_correction =  abs(self.track) * distance_now 
-            velocity_correction = (settings.mv_fw_spd_4 - self.speed)* settings.mv_fw_dur
+            yaw_correction = abs(self.track) * distance_now
+            velocity_correction = (settings.mv_fw_spd_4 - self.speed) * settings.mv_fw_dur
             r = r + distance_correction + velocity_correction
         else:
             r = r + distance_correction
         return r, distance_now
+
     def ddpg_add_noise_action(self, actions):
         noise_t = np.zeros([1, self.action_space.shape[0]])
         a_t = np.zeros([1, self.action_space.shape[0]])
@@ -245,49 +250,51 @@ class AirSimEnv(gym.Env):
         actions_with_noise = [a_t[0][0], a_t[0][1], throttle, a_t[0][2], duration]
 
         return actions_with_noise
-    def ppo_call_back_emulator(self):
-            if (msgs.mode == 'train'):
-                append_log_file(self.episodeN, "verbose")
-                append_log_file(self.episodeN, "")
-                if not(msgs.success):
-                    return
-                weight_file_name = self.check_point.find_file_to_check_point(msgs.cur_zone_number)
-                self.model.save(weight_file_name)
-                with open(weight_file_name+"_meta_data", "w") as file_hndle:
-                    json.dump(msgs.meta_data, file_hndle)
-            elif (msgs.mode == 'test'):
-                append_log_file(self.episodeN, "verbose")
-                append_log_file(self.episodeN, "")
-                with open(msgs.weight_file_under_test+"_test"+str(msgs.tst_inst_ctr) + "_meta_data", "w") as file_hndle:
-                    json.dump(msgs.meta_data, file_hndle)
-            else:
-                print("this mode " + str(msgs.mode) + "is not defined. only train and test defined")
-                exit(0)
-    def sac_call_back_emulator(self):
-            if (msgs.mode == 'train'):
-                append_log_file(self.episodeN, "verbose")
-                append_log_file(self.episodeN, "")
-                if not(msgs.success):
-                    return
-                weight_file_name = self.check_point.find_file_to_check_point(msgs.cur_zone_number)
-                self.model.save(weight_file_name)
-                with open(weight_file_name+"_meta_data", "w") as file_hndle:
-                    json.dump(msgs.meta_data, file_hndle)
-            elif (msgs.mode == 'test'):
-                append_log_file(self.episodeN, "verbose")
-                append_log_file(self.episodeN, "")
-                with open(msgs.weight_file_under_test+"_test"+str(msgs.tst_inst_ctr) + "_meta_data", "w") as file_hndle:
-                    json.dump(msgs.meta_data, file_hndle)
-            else:
-                print("this mode " + str(msgs.mode) + "is not defined. only train and test defined")
-                exit(0)
 
-    def ddpg_call_back_emulator(self): #should be called at the end of each episode
-        if(msgs.algo=="DDPG"):
+    def ppo_call_back_emulator(self):
+        if (msgs.mode == 'train'):
+            append_log_file(self.episodeN, "verbose")
+            append_log_file(self.episodeN, "")
+            if not(msgs.success):
+                return
+            weight_file_name = self.check_point.find_file_to_check_point(msgs.cur_zone_number)
+            self.model.save(weight_file_name)
+            with open(weight_file_name+"_meta_data", "w") as file_hndle:
+                json.dump(msgs.meta_data, file_hndle)
+        elif (msgs.mode == 'test'):
+            append_log_file(self.episodeN, "verbose")
+            append_log_file(self.episodeN, "")
+            with open(msgs.weight_file_under_test+"_test"+str(msgs.tst_inst_ctr) + "_meta_data", "w") as file_hndle:
+                json.dump(msgs.meta_data, file_hndle)
+        else:
+            print("this mode " + str(msgs.mode) + "is not defined. only train and test defined")
+            exit(0)
+
+    def sac_call_back_emulator(self):
+        if (msgs.mode == 'train'):
+            append_log_file(self.episodeN, "verbose")
+            append_log_file(self.episodeN, "")
+            if not(msgs.success):
+                return
+            weight_file_name = self.check_point.find_file_to_check_point(msgs.cur_zone_number)
+            self.model.save(weight_file_name)
+            with open(weight_file_name+"_meta_data", "w") as file_hndle:
+                json.dump(msgs.meta_data, file_hndle)
+        elif (msgs.mode == 'test'):
+            append_log_file(self.episodeN, "verbose")
+            append_log_file(self.episodeN, "")
+            with open(msgs.weight_file_under_test+"_test"+str(msgs.tst_inst_ctr) + "_meta_data", "w") as file_hndle:
+                json.dump(msgs.meta_data, file_hndle)
+        else:
+            print("this mode " + str(msgs.mode) + "is not defined. only train and test defined")
+            exit(0)
+
+    def ddpg_call_back_emulator(self):  # should be called at the end of each episode
+        if (msgs.algo == "DDPG"):
             if (msgs.mode == 'train'):
                 append_log_file(self.episodeN, "verbose")
                 append_log_file(self.episodeN, "")
-                if not(msgs.success):
+                if not (msgs.success):
                     return
                 weight_file_name = self.check_point.find_file_to_check_point(msgs.cur_zone_number)
                 weight_file_name = weight_file_name.replace('_critic', '')
@@ -305,58 +312,59 @@ class AirSimEnv(gym.Env):
                 exit(0)
         else:
             return
+
     def dqn_baselines_call_back_emulator(self):
-            if (msgs.mode == 'train'):
-                append_log_file(self.episodeN, "verbose")
-                append_log_file(self.episodeN, "")
-                if not(msgs.success):
-                    return
-                weight_file_name = self.check_point.find_file_to_check_point(msgs.cur_zone_number)
-                self.model.save(weight_file_name)
-                with open(weight_file_name+"_meta_data", "w") as file_hndle:
-                    json.dump(msgs.meta_data, file_hndle)
-            elif (msgs.mode == 'test'):
-                append_log_file(self.episodeN, "verbose")
-                append_log_file(self.episodeN, "")
-                with open(msgs.weight_file_under_test+"_test"+str(msgs.tst_inst_ctr) + "_meta_data", "w") as file_hndle:
-                    json.dump(msgs.meta_data, file_hndle)
-                    json.dump(msgs.meta_data, file_hndle)
-            else:
-                print("this mode " + str(msgs.mode) + "is not defined. only train and test defined")
-                exit(0)
+        if (msgs.mode == 'train'):
+            append_log_file(self.episodeN, "verbose")
+            append_log_file(self.episodeN, "")
+            if not(msgs.success):
+                return
+            weight_file_name = self.check_point.find_file_to_check_point(msgs.cur_zone_number)
+            self.model.save(weight_file_name)
+            with open(weight_file_name+"_meta_data", "w") as file_hndle:
+                json.dump(msgs.meta_data, file_hndle)
+        elif (msgs.mode == 'test'):
+            append_log_file(self.episodeN, "verbose")
+            append_log_file(self.episodeN, "")
+            with open(msgs.weight_file_under_test+"_test"+str(msgs.tst_inst_ctr) + "_meta_data", "w") as file_hndle:
+                json.dump(msgs.meta_data, file_hndle)
+                json.dump(msgs.meta_data, file_hndle)
+        else:
+            print("this mode " + str(msgs.mode) + "is not defined. only train and test defined")
+            exit(0)
 
     def update_success_rate(self):
         self.success_ratio_within_window = float(self.success_count_within_window/settings.update_zone_window)
 
     def update_zone_if_necessary(self):
         if (msgs.mode == 'train'):
-            #TODO update_zone should be more general, i.e. called for other vars
+            # TODO update_zone should be more general, i.e. called for other vars
             if self.success_rate_met():
                 self.start_new_window()
                 if (self.ease_ctr > 0):
                     self.tight_randomization()
                     return
-                elif not(self.cur_zone_number_buff  == (settings.max_zone - 1)):
+                elif not (self.cur_zone_number_buff == (settings.max_zone - 1)):
                     self.zone += 1
-                    self.cur_zone_number_buff +=1
+                    self.cur_zone_number_buff += 1
                 else:
                     self.passed_all_zones = True
                 self.update_zone("End")
-                #self.success_count = e
+                # self.success_count = e
         elif (msgs.mode == 'test'):
             if (self.episodeN % settings.testing_nb_episodes_per_zone == 0):
-                if not(self.cur_zone_number_buff  == (settings.max_zone - 1)):
+                if not (self.cur_zone_number_buff == (settings.max_zone - 1)):
                     self.zone += 1
-                    self.cur_zone_number_buff +=1
+                    self.cur_zone_number_buff += 1
                 self.update_zone("End")
         else:
             print("this mode " + str(msgs.mode) + "is not defined. only train and test defined")
             exit(0)
 
     def print_msg_of_inspiration(self):
-        if (self.success_count_within_window %2 == 0):
+        if (self.success_count_within_window % 2 == 0):
             print("---------------:) :) :) Success, Be Happy (: (: (:------------ !!!\n")
-        elif (self.success_count_within_window %3 == 0):
+        elif (self.success_count_within_window % 3 == 0):
             print("---------------:) :) :) Success, Shake Your Butt (: (: (:------------ !!!\n")
         else:
             print("---------------:) :) :) Success, Oh Yeah! (: (: (:------------ !!!\n")
@@ -409,14 +417,14 @@ class AirSimEnv(gym.Env):
         for k, v in settings.environment_change_frequency.items():
             settings.environment_change_frequency[k] += settings.ease_constant
         self.ease_ctr += 1
-        self.total_streched_ctr +=1
+        self.total_streched_ctr += 1
 
     def tight_randomization(self):
         for k, v in settings.environment_change_frequency.items():
             settings.environment_change_frequency[k] = max(
                 settings.environment_change_frequency[k] - settings.ease_constant, 1)
-        self.ease_ctr -=1
-        self.total_streched_ctr +=1
+        self.ease_ctr -= 1
+        self.total_streched_ctr += 1
 
     def start_new_window(self):
         self.window_restart_ctr = 0
@@ -424,7 +432,7 @@ class AirSimEnv(gym.Env):
         self.episodeInWindow = 0
 
     def restart_cur_window(self):
-        self.window_restart_ctr +=1
+        self.window_restart_ctr += 1
         self.success_count_within_window = 0
         self.episodeInWindow = 0
         if (self.window_restart_ctr > settings.window_restart_ctr_threshold):
@@ -432,17 +440,17 @@ class AirSimEnv(gym.Env):
             self.ease_randomization()
 
     def success_rate_met(self):
-        acceptable_success_rate =  settings.acceptable_success_rate_to_update_zone
+        acceptable_success_rate = settings.acceptable_success_rate_to_update_zone
         return (self.success_ratio_within_window >= acceptable_success_rate)
 
-    #check if possible to meet the success rate at all
+    # check if possible to meet the success rate at all
     def restart_window_if_necessary(self):
-        if not(self.possible_to_meet_success_rate()):
+        if not (self.possible_to_meet_success_rate()):
             self.restart_cur_window()
 
     def on_episode_end(self):
         self.update_success_rate()
-        if(os.name=="nt"):
+        if (os.name == "nt"):
             msgs.meta_data = {**self.game_config_handler.cur_game_config.get_all_items()}
         self.populate_episodal_log_dic()
 
@@ -476,14 +484,14 @@ class AirSimEnv(gym.Env):
     """
 
     def _step(self, action):
-        msgs.success = False 
+        msgs.success = False
         msgs.meta_data = {}
 
         try:
             print("ENter Step"+str(self.stepN))
             self.addToLog('action', action)
             self.stepN += 1
-            self.total_step_count_for_experiment +=1
+            self.total_step_count_for_experiment += 1
             """
             parent_conn, child_conn = Pipe()
             print("cuasdfasdf") 
@@ -491,43 +499,43 @@ class AirSimEnv(gym.Env):
             p.start()
             collided, now, track, self.depth, self.position, self.velocity, excp_occured = parent_conn.recv()
             p.join() 
-             
+
             if (excp_occured):
                 raise Exception("server exception happened") 
             """
-            if(msgs.algo == "DDPG"):
-                #self.actions_in_step.append([action[0][0], action[0][1], action[0][2]])
+            if (msgs.algo == "DDPG"):
+                # self.actions_in_step.append([action[0][0], action[0][1], action[0][2]])
                 self.actions_in_step.append([action[0], action[1], action[2]])
                 action = self.ddpg_add_noise_action(action)
                 collided = self.airgym.take_continious_action(float(action[0]), float(action[1]), float(action[2]), float(action[3]),
                                                  float(action[4]))
-            elif(msgs.algo == "PPO"):
+            elif (msgs.algo == "PPO"):
                 self.actions_in_step.append([action[0], action[1], action[2]])
                 collided = self.airgym.take_continious_action(action)
-            elif(msgs.algo == "SAC"):
+            elif (msgs.algo == "SAC"):
                 self.actions_in_step.append([action[0], action[1]])
                 collided = self.airgym.take_continious_action(action)
             else:
-                if(settings.profile):
+                if (settings.profile):
                     self.this_time = time.time()
-                    if(self.stepN > 1):
+                    if (self.stepN > 1):
                         self.loop_rate_list.append(self.this_time - self.prev_time)
                     self.prev_time = time.time()
                     take_action_start = time.time()
                 collided = self.airgym.take_discrete_action(action)
-                if(settings.profile):
+                if (settings.profile):
                     take_action_end = time.time()
                 self.actions_in_step.append(str(action))
-                if(settings.profile):
+                if (settings.profile):
                     self.take_action_list.append(take_action_end - take_action_start)
-
-            if(settings.profile):
+            if (settings.profile):
                 clct_state_start = time.time()
             now = self.airgym.drone_pos()
             self.track = self.airgym.goal_direction(self.goal, now)
             #self.depth = self.airgym.getScreenDepthVis(self.track)
             self.concat_state = self.airgym.getConcatState(self.goal)
             self.rgb = self.airgym.getScreenRGB()
+            print('Checkpoint 1')
             self.position = self.airgym.get_distance(self.goal)
             self.velocity = self.airgym.drone_velocity()
             if(settings.profile):
@@ -536,7 +544,7 @@ class AirSimEnv(gym.Env):
             self.speed = np.sqrt(self.velocity[0]**2 + self.velocity[1]**2 +self.velocity[2]**2)
             print("Speed:"+str(self.speed))
             distance = np.sqrt(np.power((self.goal[0] - now[0]), 2) + np.power((self.goal[1] - now[1]), 2))
-            
+
             if distance < settings.success_distance_to_goal:
                 self.success_count +=1
                 done = True
@@ -613,11 +621,11 @@ class AirSimEnv(gym.Env):
 
     def _reset(self):
         try:
-            if(settings.profile):
-                if(self.stepN>1):
+            if (settings.profile):
+                if (self.stepN > 1):
                     print("Avg loop rate:" + str(np.mean(self.loop_rate_list)))
                     self.all_loop_rates = copy.deepcopy(self.loop_rate_list)
-                    print ("Action Time:" +str(np.mean(self.take_action_list)))
+                    print("Action Time:" +str(np.mean(self.take_action_list)))
                     print("Collect State Time"+str(np.mean(self.clct_state_list)))
                 if(self.stepN % 20 ==0):
                     print("Average Loop Rate:"+str(np.mean(self.all_loop_rates)))
@@ -625,7 +633,7 @@ class AirSimEnv(gym.Env):
             print("enter reset")
             self.randomize_env()
             print("done randomizing")
-            if(os.name=="nt"):
+            if (os.name == "nt"):
                 connection_established = self.airgym.unreal_reset()
                 if not connection_established:
                     raise Exception
