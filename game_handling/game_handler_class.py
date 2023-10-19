@@ -8,6 +8,7 @@ import msgs
 import psutil
 import platform
 
+
 class GameHandler:
     def __init__(self):
         if not (settings.ip == '127.0.0.1'):
@@ -15,15 +16,18 @@ class GameHandler:
 
         self.game_file = settings.game_file
         press_play_dir = os.path.dirname(os.path.realpath(__file__))
-        #self.press_play_file = press_play_dir +"\\game_handling\\press_play\\Debug\\Debug"
-        #self.press_play_file = press_play_dir +"\\press_play\\Debug\\press_play.exe"
+        # self.press_play_file = press_play_dir +"\\game_handling\\press_play\\Debug\\Debug"
+        # self.press_play_file = press_play_dir +"\\press_play\\Debug\\press_play.exe"
         self.ue4_exe_path = settings.unreal_exec
 
-        self.ue4_params = " -game"+" -ResX="+str(settings.game_resX)+ " -ResY="+str(settings.game_resY)+ \
-                          " -WinX="+str(settings.ue4_winX)+ " -WinY="+str(settings.ue4_winY)+ " -Windowed"
-        self.cmd = str('"'+ self.ue4_exe_path+ '"')+" "+str(self.game_file)+ str(self.ue4_params)
-        assert(os.path.exists(self.ue4_exe_path)), "Unreal Editor executable:" + self.ue4_exe_path + "doesn't exist"
-        assert(os.path.exists(self.game_file)), "game_file: " + self.game_file +  " doesn't exist"
+        self.ue4_params = " -game" + " -ResX="+str(settings.game_resX) + \
+            " -ResY=" + str(settings.game_resY) + \
+            " -WinX="+str(settings.ue4_winX) + \
+            " -WinY="+str(settings.ue4_winY) + " -Windowed"
+        self.cmd = str('"' + self.ue4_exe_path + '"') + " " + \
+            str(self.game_file) + str(self.ue4_params)
+        assert (os.path.exists(self.ue4_exe_path)), "Unreal Editor executable:" + self.ue4_exe_path + "doesn't exist"
+        assert (os.path.exists(self.game_file)), "game_file: " + self.game_file + " doesn't exist"
         # assert(os.path.exists(self.press_play_file)), "press_play file: " + self.press_play_file +  " doesn't exist"
 
     def start_game_in_editor(self):

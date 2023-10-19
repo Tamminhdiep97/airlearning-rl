@@ -2,7 +2,8 @@ import sys
 import gym
 
 import os
-import tensorflow as tf
+# import tensorflow as tf
+import tensorflow.compat.v1 as tf
 os.sys.path.insert(0, os.path.abspath('../../../settings_folder'))
 import settings
 import msgs
@@ -18,7 +19,7 @@ from stable_baselines.deepq.policies import MultiInputPolicy
 from keras.backend.tensorflow_backend import set_session
 
 
-def setup(difficulty_level='default', env_name = "AirSimEnv-v42"):
+def setup(difficulty_level='default', env_name="AirSimEnv-v42"):
     config = tf.ConfigProto()
     config.gpu_options.per_process_gpu_memory_fraction = 0.6
     config.gpu_options.allow_growth = True

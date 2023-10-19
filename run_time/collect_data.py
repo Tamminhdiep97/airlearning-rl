@@ -57,6 +57,9 @@ def runTask(task):
         if (task["algo"] == "SAC"):
             train_class.train(train_obj, env)
 
+        if (task["algo"] == "DDPG"):
+            train_class.train(train_obj, env)
+
     if (task["task_type"] == "test"):
 
         if (len(task["weights"]) == 0):
@@ -91,7 +94,7 @@ def main():
     model_weights_list_to_test = ["C:/workspace/airlearning-rl/data/PPO/zone0/0.hf5"]
 
     task1 = {"task_type": "start_game"}
-    task2 = {"algo": "DQN-B", "task_type": "train", "difficulty_level": "hard", "env_name": "AirSimEnv-v42",
+    task2 = {"algo": "DDPG", "task_type": "train", "difficulty_level": "hard", "env_name": "AirSimEnv-v42",
              "weights": model_weights_list_to_test}
     taskList.append(task1)
     taskList.append(task2)

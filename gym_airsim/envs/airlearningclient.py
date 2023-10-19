@@ -45,10 +45,10 @@ class AirLearningClient(airsim.MultirotorClient):
         encoded_depth_shape = encoded_depth.shape
         encoded_depth_1d = encoded_depth.reshape(1, encoded_depth_shape[0]*encoded_depth_shape[1])
 
-        #ToDo: Add RGB, velocity etc
-        if(settings.position):
+        # TODO: Add RGB, velocity etc
+        if settings.position:
             pos = self.get_distance(goal)
-            concat_state = np.concatenate((encoded_depth_1d, pos), axis = None)
+            concat_state = np.concatenate((encoded_depth_1d, pos), axis=None)
             concat_state_shape = concat_state.shape
             concat_state = concat_state.reshape(1, concat_state_shape[0])
             concat_state = np.expand_dims(concat_state, axis=0)
@@ -56,6 +56,9 @@ class AirLearningClient(airsim.MultirotorClient):
             concat_state = encoded_depth_1d
 
         return concat_state
+
+    def getSeperateState(self, goal):
+        no
 
     def getScreenGrey(self):
         responses = self.client.simGetImages([airsim.ImageRequest("1", airsim.ImageType.Scene)])
@@ -107,7 +110,14 @@ class AirLearningClient(airsim.MultirotorClient):
             self.AirSim_reset()
             img2d = np.ones((144, 256))
 
-        image = np.invert(np.array(Image.fromarray(img2d.astype(np.uint8), mode='L')))
+        image = np.invert(
+            np.array(
+                Image.fromarray(
+                    img2d.astype(np.uint8),
+                    mode='L'
+                )
+            )
+        )
 
         factor = 10
         maxIntensity = 255.0  # depends on dtype of image data

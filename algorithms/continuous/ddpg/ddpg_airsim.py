@@ -14,6 +14,9 @@ from ReplayBuffer import ReplayBuffer
 from ActorNetwork import ActorNetwork
 from CriticNetwork import CriticNetwork
 from OU import OU
+import tensorflow.compat.v1 as tf
+
+from loguru import logger
 
 OU = OU()
 
@@ -22,7 +25,7 @@ def setup(mode='train', difficulty_level='default', env_name="AirSimEnv-v42"):
     env = gym.make(env_name)
     env.init_again(eval("settings." + difficulty_level + "_range_dic"))
     env.airgym.unreal_reset()  # must rest so the env accomodate the changes
-    time.sleep(5)
+    time.sleep(10)
 
     np.random.seed(123)
     env.seed(123)
@@ -52,28 +55,43 @@ def setup(mode='train', difficulty_level='default', env_name="AirSimEnv-v42"):
     sess = tf.Session(config=config)
     K.set_session(sess)
 
-    depth_front_kdim = (1,) + env.state()[0].shape
-    grey_front_kdim = (1,) + env.state()[1].shape
-    depth_bottom_kdim = (1,) + env.state()[2].shape
-    grey_bottom_kdim = (1,) + env.state()[3].shape
-    depth_back_kdim = (1,) + env.state()[4].shape
-    grey_back_kdim = (1,) + env.state()[5].shape
-    vel_kdim = (1,) + env.state()[6].shape
-    pos_kdim = (1,) + env.state()[7].shape
-    action_dim = env.action_space.shape[0]  # pitch, roll, throttle, yaw_rate and duration
-    # create actor network:
-    actor = ActorNetwork(sess, depth_front_kdim, grey_front_kdim, depth_bottom_kdim, grey_bottom_kdim, depth_back_kdim,
-                         grey_back_kdim, vel_kdim, pos_kdim, action_dim, BATCH_SIZE, TAU,
-                         LRA)  # TODO: Figure out how to modify this
+    depth_front_kdim = (1,) + env.depth.shape
+    grey_front_kdim = (1,) + env.grey.shape
+    # depth_bottom_kdim = (1,) + env.state()[2].shape
+    # grey_bottom_kdim = (1,) + env.state()[3].shape
+    # depth_back_kdim = (1,) + env.state()[4].shape
+    # grey_back_kdim = (1,) + env.state()[5].shape
+    depth_bottom_kdim = 0
+    grey_bottom_kdim = 0
+    depth_back_kdim = 0
+    grey_back_kdim = 0
 
-    critic = CriticNetwork(sess, depth_front_kdim, grey_front_kdim, depth_bottom_kdim, grey_bottom_kdim,
-                           depth_back_kdim, grey_back_kdim, vel_kdim, pos_kdim, action_dim, BATCH_SIZE, TAU,
-                           LRC)  # TODO: Figure out how to modify this
+    vel_kdim = (1,) + env.velocity.shape
+    pos_kdim = (1,) + env.position.shape
+    action_dim = env.action_space.shape[0]
+    # pitch, roll, throttle, yaw_rate and duration
+    # create actor network:
+    actor = ActorNetwork(
+        sess, depth_front_kdim, grey_front_kdim, depth_bottom_kdim,
+        grey_bottom_kdim, depth_back_kdim, grey_back_kdim, vel_kdim, pos_kdim,
+        action_dim, BATCH_SIZE, TAU, LRA
+    )
+    # TODO: Figure out how to modify this
+
+    critic = CriticNetwork(
+        sess, depth_front_kdim, grey_front_kdim, depth_bottom_kdim,
+        grey_bottom_kdim, depth_back_kdim, grey_back_kdim, vel_kdim, pos_kdim,
+        action_dim, BATCH_SIZE, TAU, LRC
+    )
+    # TODO: Figure out how to modify this
 
     buff = ReplayBuffer(BUFFER_SIZE)  # Create replay buffer
 
-    agent = DDPGAgent(GAMMA, BATCH_SIZE, TAU, LRA, LRC, total_steps, max_steps, episode_count,
-                      MIN_THROTTLE, DURATION, env, actor, critic, buff)
+    agent = DDPGAgent(
+        GAMMA, BATCH_SIZE, TAU, LRA, LRC, total_steps, max_steps,
+        episode_count, MIN_THROTTLE, DURATION, env, actor, critic, buff
+    )
+    logger.info(agent)
 
     env.set_actor_critic(actor.model, critic.model)
     return agent, env

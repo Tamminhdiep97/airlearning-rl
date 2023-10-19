@@ -5,8 +5,7 @@ from collections import deque
 
 import gym
 import numpy as np
-import tensorflow as tf
-
+import tensorflow.compat.v1 as tf
 from stable_baselines import logger
 from stable_baselines.common import explained_variance, ActorCriticRLModel, tf_util, SetVerbosity, TensorboardWriter
 from stable_baselines.common.runners import AbstractEnvRunner
@@ -255,14 +254,16 @@ class PPO2(ActorCriticRLModel):
 
         return policy_loss, value_loss, policy_entropy, approxkl, clipfrac
 
-    def learn(self, total_timesteps, callback=None, seed=None, log_interval=1, tb_log_name="PPO2",
-              reset_num_timesteps=True):
+    def learn(
+        self, total_timesteps, callback=None, seed=None, log_interval=1,
+        tb_log_name="PPO2",
+        reset_num_timesteps=True
+    ):
         # Transform to callable if needed
         self.learning_rate = get_schedule_fn(self.learning_rate)
         self.cliprange = get_schedule_fn(self.cliprange)
 
         new_tb_log = self._init_num_timesteps(reset_num_timesteps)
-
         with SetVerbosity(self.verbose), TensorboardWriter(self.graph, self.tensorboard_log, tb_log_name, new_tb_log) \
                 as writer:
             self._setup_learn(seed)

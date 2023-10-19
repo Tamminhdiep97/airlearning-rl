@@ -99,7 +99,7 @@ class AirSimEnv(gym.Env):
         self.game_handler = GameHandler()
         self.OU = OU()
         self.game_config_handler = GameConfigHandler()
-        if(settings.concatenate_inputs):
+        if settings.concatenate_inputs:
             self.concat_state = np.zeros((1, 1, STATE_POS + STATE_DEPTH_H * STATE_DEPTH_W), dtype=np.uint8)
         self.depth = np.zeros((154, 256), dtype=np.uint8)
         self.rgb = np.zeros((154, 256, 3), dtype=np.uint8)
@@ -121,7 +121,7 @@ class AirSimEnv(gym.Env):
         self.total_reward = 0
 
         print('msgs.algo:', msgs.algo)
-        if(msgs.algo == "DDPG"):
+        if msgs.algo == "DDPG":
             self.actor = ""
             self.critic = ""
         else:
@@ -170,7 +170,7 @@ class AirSimEnv(gym.Env):
         self.game_config_handler.set_range(*[el for el in range_dic.items()])
         self.game_config_handler.populate_zones()
 
-    """ 
+    """
     def set_test_vars(self, weight_file_name, test_instance_number):
         self.weight_file_name = weight_file_name
         self.test_instance_number = test_instance_number
@@ -182,7 +182,7 @@ class AirSimEnv(gym.Env):
         self.game_config_handler.populate_zones()
         self.sampleGameConfig()
         self.goal = utils.airsimize_coordinates(self.game_config_handler.get_cur_item("End"))
-    
+
     def setRangeAndSampleAndReset(self, range_dic):
         self.game_config_handler.set_range(*[el for el in range_dic.items()])
         self.game_config_handler.populate_zones()
@@ -197,13 +197,14 @@ class AirSimEnv(gym.Env):
         return self.goal
 
     def state(self):
-        if(msgs.algo == "DDPG"):
-            return self.depth
-        elif(msgs.algo == "PPO"):
+        if msgs.algo == "DDPG":
+            return self.depth, self.grey, self.velocity, self.position
+            # return self.concat_state
+        elif msgs.algo == "PPO":
             return self.concat_state
-        elif(msgs.algo == "SAC"):
+        elif msgs.algo == "SAC":
             return self.concat_state
-        elif(msgs.algo == "DQN-B"):
+        elif msgs.algo == "DQN-B":
             return self.concat_state
         else:
             return self.depth, self.velocity, self.position
@@ -236,7 +237,7 @@ class AirSimEnv(gym.Env):
         noise_t[0][1] = max(settings.epsilon, 0) * self.OU.function(actions[0][1], 0.0, 0.60, 0.30)  # roll
         noise_t[0][2] = max(settings.epsilon, 0) * self.OU.function(actions[0][2], 0.0, 0.60, 0.30)  # yaw_rate
 
-        if(random.random() < 0.1):
+        if (random.random() < 0.1):
             print("********Now we apply the brake***********")
             noise_t[0][0] = max(settings.epsilon, 0) * self.OU.function(actions[0][0], 0.1, 1.00, 0.10)
             noise_t[0][1] = max(settings.epsilon, 0) * self.OU.function(actions[0][1], 0.1, 1.00, 0.10)
@@ -454,13 +455,13 @@ class AirSimEnv(gym.Env):
             msgs.meta_data = {**self.game_config_handler.cur_game_config.get_all_items()}
         self.populate_episodal_log_dic()
 
-        if(msgs.algo == "DDPG"):
+        if msgs.algo == "DDPG":
             self.ddpg_call_back_emulator()
-        elif(msgs.algo == "PPO"):
+        elif msgs.algo == "PPO":
             self.ppo_call_back_emulator()
-        elif(msgs.algo == "SAC"):
+        elif msgs.algo == "SAC":
             self.sac_call_back_emulator()
-        elif(msgs.algo == "DQN-B"):
+        elif msgs.algo == "DQN-B":
             self.dqn_baselines_call_back_emulator()
 
         self.restart_window_if_necessary()

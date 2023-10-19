@@ -14,6 +14,7 @@ from stable_baselines.a2c.utils import conv_grey, linear, conv_to_fc, batch_to_s
 from stable_baselines.common.vec_env import DummyVecEnv
 from stable_baselines import A2C
 
+
 class MultiInputPolicy(ActorCriticPolicy):
     def __init__(self, sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse=False, **kwargs):
         super(MultiInputPolicy, self).__init__(sess, ob_space, ac_space, n_env, n_steps, n_batch, reuse=reuse, scale=False)

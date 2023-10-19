@@ -1,7 +1,7 @@
 #ining
 import os, sys
 import numpy as np
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 import gym
 
 from keras.models import Sequential, Model
@@ -53,12 +53,24 @@ def setup(difficulty_level='default', env_name = "AirSimEnv-v42"):
 
     # Sequential model for convolutional layers applied to image
     image_model = Sequential()
-    if(settings.policy=='deep'):
-        image_model.add(Conv2D(128,(3, 3), strides=(3, 3), padding='valid', activation='relu', input_shape=img_kshape,
-                           data_format="channels_first"))
-        image_model.add(Conv2D(64, (3, 3), strides=(2, 2), padding='valid', activation='relu'))
-        image_model.add(Conv2D(32, (3, 3), strides=(1, 1), padding='valid', activation='relu'))
-        image_model.add(Conv2D(32, (1, 1), strides=(1, 1), padding='valid', activation='relu'))
+    if settings.policy == 'deep':
+        image_model.add(
+            Conv2D(128, (3, 3), strides=(3, 3), padding='valid',
+            activation='relu', input_shape=img_kshape,
+            data_format="channels_first")
+        )
+        image_model.add(
+            Conv2D(64, (3, 3), strides=(2, 2), padding='valid',
+            activation='relu')
+        )
+        image_model.add(
+            Conv2D(32, (3, 3), strides=(1, 1), padding='valid',
+            activation='relu')
+        )
+        image_model.add(
+            Conv2D(32, (1, 1), strides=(1, 1), padding='valid',
+            activation='relu')
+        )
 
         image_model.add(Flatten())
 

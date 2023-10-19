@@ -4,6 +4,7 @@ from game_config_class import *
 import copy
 import random
 import utils
+import json
 from file_handling import *
 
 
@@ -22,7 +23,6 @@ class GameConfigHandler:
         if (settings.use_preloaded_json):
             self.blah = find_meta_data_files_in_time_order(settings.meta_data_folder)
             self.meta_data_files_in_order = iter(find_meta_data_files_in_time_order(settings.meta_data_folder))
-
 
     # self.init_range_with_default(range_dic)
     def get_total_number_of_zones(self):
@@ -123,22 +123,33 @@ class GameConfigHandler:
         output_file_handle = open(outputfile, "w")
         json.dump(self.cur_game_config.config_data, output_file_handle)
         output_file_handle.close()
-        if not( settings.ip == '127.0.0.1'):
+        if not settings.ip == '127.0.0.1':
             utils.copy_json_to_server(outputfile)
-            if(settings.use_preloaded_json):
+            if settings.use_preloaded_json:
                 outputfile = next(self.meta_data_files_in_order)
             utils.copy_json_to_server(outputfile)
 
-        if(settings.use_preloaded_json):
+        if settings.use_preloaded_json:
             outputfile = next(self.meta_data_files_in_order)
             utils.copy_json_to_server(outputfile)
+
     def increment_zone(self, key):
         low_bnd = self.game_config_zones.get_item(key)[0]
         up_bnd = self.game_config_zones.get_item(key)[1]
         incr_size = self.game_config_zones.get_item(key)[2]
-        self.game_config_zones.set_item(key, [ \
-            min(low_bnd + incr_size, len(self.game_config_range.get_item(key)) - incr_size),
-            min(up_bnd + incr_size, len(self.game_config_range.get_item(key))), incr_size])
+        self.game_config_zones.set_item(
+            key, [
+                min(
+                    low_bnd+incr_size,
+                    len(self.game_config_range.get_item(key))-incr_size
+                ),
+                min(
+                    up_bnd+incr_size,
+                    len(self.game_config_range.get_item(key))
+                ),
+                incr_size
+            ]
+        )
 
     def update_zone(self, *arg):
         all_keys = self.game_config_range.find_all_keys()
@@ -147,7 +158,6 @@ class GameConfigHandler:
 
         for el in arg:
             assert (el in all_keys), str(el) + " is not a key in the json file"
-
             # corner cases
             if el in ["Indoor", "GameSetting"]:  # make sure to not touch indoor, cause it'll mess up the keys within it
                 continue
