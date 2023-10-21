@@ -8,7 +8,7 @@ import warnings
 import gym
 import numpy as np
 import tensorflow.compat.v1 as tf
-import tensorflow.contrib as tc
+# import tensorflow.contrib as tc
 from mpi4py import MPI
 
 from stable_baselines import logger
@@ -461,18 +461,18 @@ class DDPG(OffPolicyRLModel):
         normalized_critic_target_tf = tf.clip_by_value(normalize(self.critic_target, self.ret_rms),
                                                        self.return_range[0], self.return_range[1])
         self.critic_loss = tf.reduce_mean(tf.square(self.normalized_critic_tf - normalized_critic_target_tf))
-        if self.critic_l2_reg > 0.:
-            critic_reg_vars = [var for var in tf_util.get_trainable_vars('model/qf/')
-                               if 'bias' not in var.name and 'output' not in var.name and 'b' not in var.name]
-            if self.verbose >= 2:
-                for var in critic_reg_vars:
-                    logger.info('  regularizing: {}'.format(var.name))
-                logger.info('  applying l2 regularization with {}'.format(self.critic_l2_reg))
-            critic_reg = tc.layers.apply_regularization(
-                tc.layers.l2_regularizer(self.critic_l2_reg),
-                weights_list=critic_reg_vars
-            )
-            self.critic_loss += critic_reg
+        # if self.critic_l2_reg > 0.:
+        #     critic_reg_vars = [var for var in tf_util.get_trainable_vars('model/qf/')
+        #                        if 'bias' not in var.name and 'output' not in var.name and 'b' not in var.name]
+        #     if self.verbose >= 2:
+        #         for var in critic_reg_vars:
+        #             logger.info('  regularizing: {}'.format(var.name))
+        #         logger.info('  applying l2 regularization with {}'.format(self.critic_l2_reg))
+        #     critic_reg = tc.layers.apply_regularization(
+        #         tf.keras.regularizers.l2(self.critic_l2_reg),
+        #         weights_list=critic_reg_vars
+        #     )
+        #     self.critic_loss += critic_reg
         critic_shapes = [var.get_shape().as_list() for var in tf_util.get_trainable_vars('model/qf/')]
         critic_nb_params = sum([reduce(lambda x, y: x * y, shape) for shape in critic_shapes])
         if self.verbose >= 2:

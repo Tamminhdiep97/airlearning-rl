@@ -41,7 +41,8 @@ class PPO2(ActorCriticRLModel):
     """
 
     def __init__(self, policy, env, gamma=0.99, n_steps=128, ent_coef=0.01, learning_rate=2.5e-4, vf_coef=0.5,
-                 max_grad_norm=0.5, lam=0.95, nminibatches=4, noptepochs=4, cliprange=0.2, verbose=0,
+                 max_grad_norm=0.5, lam=0.95, nminibatches=4, noptepochs=4,
+                 cliprange=0.2, verbose=1,
                  tensorboard_log=None, _init_setup_model=True, policy_kwargs=None,
                  full_tensorboard_log=False):
 
@@ -321,6 +322,7 @@ class PPO2(ActorCriticRLModel):
                     self.num_timesteps += (self.n_envs * self.noptepochs) // envs_per_batch * update_fac
 
                 loss_vals = np.mean(mb_loss_vals, axis=0)
+                logger.logkv(loss_vals)
                 t_now = time.time()
                 fps = int(self.n_batch / (t_now - t_start))
 
@@ -434,7 +436,7 @@ class Runner(AbstractEnvRunner):
         mb_actions = np.asarray(mb_actions)
         mb_values = np.asarray(mb_values, dtype=np.float32)
         mb_neglogpacs = np.asarray(mb_neglogpacs, dtype=np.float32)
-        mb_dones = np.asarray(mb_dones, dtype=np.bool)
+        mb_dones = np.asarray(mb_dones, dtype=np.bool_)
         last_values = self.model.value(self.obs, self.states, self.dones)
         # discount/bootstrap off value fn
         mb_advs = np.zeros_like(mb_rewards)

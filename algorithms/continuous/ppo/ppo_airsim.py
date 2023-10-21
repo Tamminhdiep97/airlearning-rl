@@ -2,7 +2,7 @@ import sys
 import gym
 
 import os
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 os.sys.path.insert(0, os.path.abspath('../../../settings_folder'))
 import settings
 import msgs
@@ -13,14 +13,14 @@ from stable_baselines.common.policies import MlpPolicy
 from stable_baselines.common.policies import CnnPolicy
 from stable_baselines.common.vec_env import DummyVecEnv
 from stable_baselines import PPO2
-from keras.backend.tensorflow_backend import set_session
+from keras.backend import set_session
 
 from loguru import logger
 
 
 def setup(difficulty_level='default', env_name="AirSimEnv-v42"):
     config = tf.ConfigProto()
-    config.gpu_options.per_process_gpu_memory_fraction = 0.6
+    config.gpu_options.per_process_gpu_memory_fraction = 0.9
     config.gpu_options.allow_growth = True
     set_session(tf.Session(config=config))
 

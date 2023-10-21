@@ -4,12 +4,13 @@ from keras.models import model_from_json
 from keras.models import Sequential, Model
 from keras.constraints import max_norm
 # from keras.engine.training import collect_trainable_weights
-from keras.layers import Conv2D, Activation, Dense, Flatten, Input, merge, Lambda, concatenate, BatchNormalization, \
-    initializers
+from keras.layers import Conv2D, Activation, Dense, Flatten, Input,\
+    Lambda, concatenate, BatchNormalization
+from keras import initializers
 from keras.optimizers import Adam
 import tensorflow.compat.v1 as tf
-import keras.backend as K
-
+# import keras.backend as K
+from keras import backend as K
 from loguru import logger
 
 
@@ -262,11 +263,17 @@ class ActorNetwork(object):
         # model = Model(
         #         input=[depth_front_image, grey_front_image, depth_bottom_image, grey_bottom_image, depth_back_image,
         #                grey_back_image, vel, pos], output=flight_control)
+        # model = Model(
+        #     input=[
+        #         depth_front_image, grey_front_image, vel, pos
+        #     ],
+        #     output=flight_control
+        # )
         model = Model(
-            input=[
+            [
                 depth_front_image, grey_front_image, vel, pos
             ],
-            output=flight_control
+            flight_control
         )
 
         logger.info(model.summary())

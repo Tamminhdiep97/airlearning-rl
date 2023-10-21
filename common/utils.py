@@ -9,7 +9,6 @@ import msgs
 import matplotlib.pyplot as plt
 import shutil
 import pandas as pd
-import subprocess
 
 
 def parse_data(file_name):

@@ -16,12 +16,12 @@ from stable_baselines.common.vec_env import DummyVecEnv
 from stable_baselines.deepq import DQN, MlpPolicy
 from stable_baselines.deepq.policies import MultiInputPolicy
 
-from keras.backend.tensorflow_backend import set_session
+from keras.backend import set_session
 
 
 def setup(difficulty_level='default', env_name="AirSimEnv-v42"):
     config = tf.ConfigProto()
-    config.gpu_options.per_process_gpu_memory_fraction = 0.6
+    config.gpu_options.per_process_gpu_memory_fraction = 0.9
     config.gpu_options.allow_growth = True
     set_session(tf.Session(config=config))
 

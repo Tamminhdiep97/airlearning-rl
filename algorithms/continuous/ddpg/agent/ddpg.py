@@ -8,7 +8,7 @@ from keras.models import Sequential
 from keras.layers.core import Dense, Dropout, Activation, Flatten
 from keras.optimizers import Adam
 import tensorflow as tf
-from keras.backend.tensorflow_backend import set_session
+from keras.backend import set_session
 # from keras.engine.training import collect_trainable_weights
 import json
 from loguru import logger
@@ -96,19 +96,16 @@ class DDPGAgent(object):
                 self.epsilon -= 1.0 / self.explore
                 a_t = np.zeros([1, action_dim])
                 noise_t = np.zeros([1, action_dim])
-
                 a_t_original = self.actor.model.predict(s_t)
+                # a_t_original = self.actor.model(s_t)
                 # TODO: use a generic logger?
                 with open("actions_from_network.txt", "a") as myfile:
                     myfile.write(str([a_t_original[0][0], a_t_original[0][1], a_t_original[0][2]]) + ", ")
-
                 state, r_t, done, info = self.env._step(a_t_original)
-
                 depth_front_t1 = np.expand_dims(state[0], axis=0)
                 depth_front_t1 = np.expand_dims(depth_front_t1, axis=0)
                 grey_front_t1 = np.expand_dims(state[1], axis=0)
                 grey_front_t1 = np.expand_dims(grey_front_t1, axis=0)
-
                 # depth_bottom_t1 = np.expand_dims(state[2], axis=0)
                 # depth_bottom_t1 = np.expand_dims(depth_bottom_t1, axis=0)
                 # grey_bottom_t1 = np.expand_dims(state[3], axis=0)
@@ -343,7 +340,7 @@ class DDPGAgent(object):
 
                 step += 1
                 if (done or step > self.num_steps):
-                        break
+                    break
 
         print("TOTAL REWARD @ " + str(i) + "-th Episode  : Reward " + str(total_reward))
         print("Total Step: " + str(step))

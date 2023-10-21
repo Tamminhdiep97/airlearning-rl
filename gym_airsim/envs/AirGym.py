@@ -19,7 +19,8 @@ from algorithms.continuous.ddpg.OU import OU
 import random
 from gym_airsim.envs.airlearningclient import *
 from utils import append_log_file
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
+from loguru import logger
 
 
 def child_step(self, conn, airgym_obj):
@@ -256,7 +257,7 @@ class AirSimEnv(gym.Env):
         if (msgs.mode == 'train'):
             append_log_file(self.episodeN, "verbose")
             append_log_file(self.episodeN, "")
-            if not(msgs.success):
+            if not msgs.success:
                 return
             weight_file_name = self.check_point.find_file_to_check_point(msgs.cur_zone_number)
             self.model.save(weight_file_name)
@@ -489,7 +490,7 @@ class AirSimEnv(gym.Env):
         msgs.meta_data = {}
 
         try:
-            print("ENter Step"+str(self.stepN))
+            logger.info("ENTER STEP: {}".format(str(self.stepN)))
             self.addToLog('action', action)
             self.stepN += 1
             self.total_step_count_for_experiment += 1
@@ -505,11 +506,13 @@ class AirSimEnv(gym.Env):
                 raise Exception("server exception happened") 
             """
             if (msgs.algo == "DDPG"):
-                # self.actions_in_step.append([action[0][0], action[0][1], action[0][2]])
-                self.actions_in_step.append([action[0], action[1], action[2]])
+                self.actions_in_step.append([action[0][0], action[0][1], action[0][2]])
+                # self.actions_in_step.append([action[0], action[1], action[2]])
                 action = self.ddpg_add_noise_action(action)
-                collided = self.airgym.take_continious_action(float(action[0]), float(action[1]), float(action[2]), float(action[3]),
-                                                 float(action[4]))
+                # collided = self.airgym.take_continious_action(float(action[0]), float(action[1]), float(action[2]), float(action[3]),
+                #                                  float(action[4]))
+                collided = self.airgym.take_continious_action(action)
+
             elif (msgs.algo == "PPO"):
                 self.actions_in_step.append([action[0], action[1], action[2]])
                 collided = self.airgym.take_continious_action(action)
@@ -536,21 +539,20 @@ class AirSimEnv(gym.Env):
             #self.depth = self.airgym.getScreenDepthVis(self.track)
             self.concat_state = self.airgym.getConcatState(self.goal)
             self.rgb = self.airgym.getScreenRGB()
-            print('Checkpoint 1')
             self.position = self.airgym.get_distance(self.goal)
             self.velocity = self.airgym.drone_velocity()
-            if(settings.profile):
+            if (settings.profile):
                 clct_state_end = time.time()
                 self.clct_state_list.append(clct_state_end - clct_state_start)
             self.speed = np.sqrt(self.velocity[0]**2 + self.velocity[1]**2 +self.velocity[2]**2)
-            print("Speed:"+str(self.speed))
+            logger.info('Speed: {}'.format(str(self.speed)))
             distance = np.sqrt(np.power((self.goal[0] - now[0]), 2) + np.power((self.goal[1] - now[1]), 2))
 
             if distance < settings.success_distance_to_goal:
-                self.success_count +=1
+                self.success_count += 1
                 done = True
                 self.print_msg_of_inspiration()
-                self.success_count_within_window +=1
+                self.success_count_within_window += 1
                 self.success = True
                 msgs.success = True
                 # Todo: Add code for landing drone (Airsim API)
@@ -560,7 +562,7 @@ class AirSimEnv(gym.Env):
                 done = True
                 reward = -100.0
                 self.success = False
-            elif collided == True:
+            elif collided is True:
                 done = True
                 reward = -100.0
                 self.success = False
@@ -574,28 +576,32 @@ class AirSimEnv(gym.Env):
                 self.success = False
 
 
-            #Todo: penalize for more crazy and unstable actions
+            # TODO: penalize for more crazy and unstable actions
 
             self.allLogs['distance'] = [float(distance)]
             self.distance_in_step.append(distance)
-            self.count +=1
+            self.count += 1
             self.reward_in_step.append(reward)
             self.total_reward = sum(self.reward_in_step)
             self.position_in_step.append(str(now))
-            info = {"x_pos":now[0], "y_pos":now[1]}
+            info = {
+                "x_pos": now[0],
+                "y_pos": now[1]
+            }
 
             state = self.state()
             self.prev_state = state
             self.prev_info = info
 
-            #self.on_step_end()
-            if (done):
+            # self.on_step_end()
+            if done:
                 self.on_episode_end()
 
             return state, reward, done, info
         except Exception as e:
-            print("------------------------- step failed ----------------  with"\
-                    , e , " error")
+            logger.error(
+                "------------------------- step failed ----------------  with {}".format(e)
+            )
             self.game_handler.restart_game()
             self.airgym = AirLearningClient()
             return self.prev_state, 0, True, self.prev_info
@@ -631,26 +637,27 @@ class AirSimEnv(gym.Env):
                 if(self.stepN % 20 ==0):
                     print("Average Loop Rate:"+str(np.mean(self.all_loop_rates)))
 
-            print("enter reset")
+            logger.info("Enter reset")
             self.randomize_env()
-            print("done randomizing")
+            logger.info("done randomizing")
             if (os.name == "nt"):
                 connection_established = self.airgym.unreal_reset()
                 if not connection_established:
                     raise Exception
-            print("done unreal_resetting")
+            logger.info("done unreal_resetting")
             time.sleep(2)
             self.airgym.AirSim_reset()
-            print("done arisim reseting")
+            logger.info("done arisim reseting")
             self.on_episode_start()
-            print("done on episode start")
+            logger.info("done on episode start")
             state = self.state()
             self.prev_state = state
             return state
 
         except Exception as e:
-            print("------------------------- reset failed ----------------  with"\
-                    , e , " error")
+            logger.error(
+                "--------------- reset failed ------------  with {}".format(e)
+             )
             self.game_handler.restart_game()
             self.airgym = AirLearningClient()
             return self.prev_state

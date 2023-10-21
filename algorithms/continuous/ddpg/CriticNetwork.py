@@ -3,8 +3,9 @@ import math
 # from keras.initializations import normal, identity
 from keras.models import model_from_json, load_model
 # from keras.engine.training import collect_trainable_weights
-from keras.layers import Conv2D, Dense, Flatten, Input, merge, Lambda, Activation, concatenate, BatchNormalization, \
-    initializers
+from keras.layers import Conv2D, Dense, Flatten, Input, Lambda, Activation, \
+    concatenate, BatchNormalization
+from keras import initializers
 from keras.models import Sequential, Model
 from keras.optimizers import Adam
 from keras.constraints import max_norm
@@ -247,11 +248,17 @@ class CriticNetwork(object):
         # model = Model(
         #         input=[depth_front_image, grey_front_image, depth_bottom_image, grey_bottom_image, depth_back_image,
         #                grey_back_image, vel, pos, A], output=V)
+        # model = Model(
+        #     input=[
+        #         depth_front_image, grey_front_image, vel, pos, A
+        #     ],
+        #     output=V
+        # )
         model = Model(
-            input=[
+            [
                 depth_front_image, grey_front_image, vel, pos, A
             ],
-            output=V
+            V
         )
 
         logger.info(model.summary())

@@ -57,9 +57,6 @@ class AirLearningClient(airsim.MultirotorClient):
 
         return concat_state
 
-    def getSeperateState(self, goal):
-        no
-
     def getScreenGrey(self):
         responses = self.client.simGetImages([airsim.ImageRequest("1", airsim.ImageType.Scene)])
         response = responses[0]
@@ -99,7 +96,7 @@ class AirLearningClient(airsim.MultirotorClient):
             print("Camera is not returning image!")
             print("Image size:"+str(responses[0].height)+","+str(responses[0].width))
         else:
-            img1d = np.array(responses[0].image_data_float, dtype=np.float)
+            img1d = np.array(responses[0].image_data_float, dtype=np.float64)
 
         img1d = 255 / np.maximum(np.ones(img1d.size), img1d)
         if ((responses[0].width != 0 or responses[0].height != 0)):
@@ -135,7 +132,7 @@ class AirLearningClient(airsim.MultirotorClient):
         info_section = np.zeros((10, small.shape[1]), dtype=np.uint8) + 255
         info_section[9, :] = 0
 
-        line = np.int(
+        line = int(
             (((track - -180) * (small.shape[1] - 0)) / (180 - -180)) + 0
         )
         '''
@@ -215,23 +212,26 @@ class AirLearningClient(airsim.MultirotorClient):
     def take_continious_action(self, action):
 
         if (msgs.algo == 'DDPG'):
-            pitch = action[0]
-            roll = action[1]
-            throttle = action[2]
+            pitch = np.clip(action[0], -3.0, 3.0)
+            roll = np.clip(action[1], -3.0, 3.0)
+            throttle = np.clip(action[2], -3.0, 3.0)
             yaw_rate = action[3]
             duration = action[4]
             self.client.moveByAngleThrottleAsync(pitch, roll, throttle, yaw_rate, duration, vehicle_name='').join()
+            # self.client.moveByAngleThrottleAsync(pitch, roll, throttle, yaw_rate, duration, vehicle_name='').join()
         else:
             # pitch = np.clip(action[0], -0.261, 0.261)
             # roll = np.clip(action[1], -0.261, 0.261)
             # yaw_rate = np.clip(action[2], -3.14, 3.14)
-            if(settings.move_by_velocity):
-                vx = np.clip(action[0], -1.0, 1.0)
-                vy = np.clip(action[1], -1.0, 1.0)
+            if (settings.move_by_velocity):
+                vx = np.clip(action[0], -3.0, 3.0)
+                vy = np.clip(action[1], -3.0, 3.0)
+                yaw_rate = np.clip(action[2], -3.0, 3.0)
                 #print("Vx, Vy--------------->"+str(vx)+", "+ str(vy))
                 #self.client.moveByAngleZAsync(float(pitch), float(roll), -6, float(yaw_rate), settings.duration_ppo).join()
                 self.client.moveByVelocityZAsync(float(vx), float(vy), -6, 0.5, 1, yaw_mode=airsim.YawMode(True, 0)).join()
-            elif(settings.move_by_position):
+                self.client.hoverAsync().join()
+            elif (settings.move_by_position):
                 pos = self.drone_pos()
                 delta_x = np.clip(action[0], -1, 1)
                 delta_y = np.clip(action[1], -1, 1)

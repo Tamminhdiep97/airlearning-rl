@@ -2,11 +2,10 @@ import sys
 import gym
 
 import os
-import tensorflow as tf
+import tensorflow.compat.v1 as tf
 os.sys.path.insert(0, os.path.abspath('../../../settings_folder'))
 import settings
 import gym
-import tensorflow as tf
 import numpy as np
 
 from stable_baselines.common.policies import FeedForwardPolicy, ActorCriticPolicy, register_policy, nature_cnn
@@ -26,7 +25,7 @@ class MultiInputPolicy(ActorCriticPolicy):
             depth = self.processed_obs[n_batch:, :, :(settings.encoded_depth_H * settings.encoded_depth_W)]
             pos = self.processed_obs[n_batch:, :, (settings.encoded_depth_H * settings.encoded_depth_W):]
 
-            if(n_batch == None):
+            if n_batch is None:
                 depth = tf.reshape(depth, shape=(-1, settings.encoded_depth_H, settings.encoded_depth_W, 1))
                 pos = tf.reshape(pos, shape=(-1,1,settings.position_depth))
             else:

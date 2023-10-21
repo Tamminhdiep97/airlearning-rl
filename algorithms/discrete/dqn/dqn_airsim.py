@@ -7,7 +7,7 @@ import gym
 from keras.models import Sequential, Model
 from keras.layers import Dense, Flatten, Conv2D, concatenate, Input, Reshape
 from keras.optimizers import Adam
-from keras.backend.tensorflow_backend import set_session
+from keras.backend import set_session
 
 from rl.agents.dqn import DQNAgent
 from rl.policy import LinearAnnealedPolicy, EpsGreedyQPolicy
@@ -17,6 +17,7 @@ from rl.processors import MultiInputProcessor
 from callbacks import *
 import settings
 from gym_airsim.envs.airlearningclient import *
+
 
 def setup(difficulty_level='default', env_name = "AirSimEnv-v42"):
     #parser = argparse.ArgumentParser()

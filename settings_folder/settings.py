@@ -1,7 +1,7 @@
 import os
 import math
 import machine_dependent_settings as mds
-
+import random
 
 # ---------------------------
 # imports
@@ -80,7 +80,13 @@ default_range_dic = easy_range_dic = {"End": zone_dic["End"] * ["Mutable"],
                                       "ArenaSize": [[50, 50, 20]],
                                       "PlayerStart": [[0, 0, 0]],
                                       "NumberOfDynamicObjects": list(range(0, 1)),
-                                      "Walls1": [[255, 255, 10]],
+                                      "Walls1": [
+                                          [
+                                              random.choice(range(0, 255)),
+                                              random.choice(range(0, 255)),
+                                              random.choice(range(0, 255))
+                                          ]
+                                      ],
                                       "Seed": list(range(0, 10000)),
                                       "VelocityRange": [[5, 25]],
                                       "Name": ["Name"],
@@ -92,7 +98,13 @@ medium_range_dic = {"End": zone_dic["End"] * ["Mutable"],
                     "ArenaSize": [[60, 60, 20]],
                     "PlayerStart": [[0, 0, 0]],
                     "NumberOfDynamicObjects": list(range(0, 1)),
-                    "Walls1": [[255, 255, 10]],
+                    "Walls1": [
+                        [
+                            random.choice(range(0, 255)),
+                            random.choice(range(0, 255)),
+                            random.choice(range(0, 255))
+                        ]
+                               ],
                     "Seed": list(range(0, 5000)),
                     "VelocityRange": [[0, 3]],
                     "Name": ["Name"],
@@ -101,14 +113,20 @@ medium_range_dic = {"End": zone_dic["End"] * ["Mutable"],
 hard_range_dic = {"End": zone_dic["End"] * ["Mutable"],
                   "MinimumDistance": [4],
                   "EnvType": ["Indoor"],
-                  "ArenaSize": [[30, 30, 10]],
+                  "ArenaSize": [[40, 40, 20]],
                   "PlayerStart": [[0, 0, 0]],
-                  "NumberOfDynamicObjects": list(range(6, 10)),
-                  "Walls1": [[255, 255, 10]],
+                  "NumberOfDynamicObjects": list(range(5, 15)),
+                  "Walls1": [
+                      [
+                          random.choice(range(0, 255)),
+                          random.choice(range(0, 255)),
+                          random.choice(range(0, 255))
+                      ]
+                  ],
                   "Seed": list(range(0, 5000)),
                   "VelocityRange": [[5, 25]],
                   "Name": ["Name"],
-                  "NumberOfObjects": list(range(10, 20))}
+                  "NumberOfObjects": list(range(10, 30))}
 
 # ------------------------------------------------------------
 #                               -game related-
@@ -140,7 +158,7 @@ ip = '127.0.0.1'
 # ---------------------------
 
 # drone controls
-duration_ppo = 0.3
+duration_ppo = 1  # 0.3
 move_by_velocity = True
 move_by_position = False
 # ---------------------------
@@ -245,10 +263,10 @@ profile = True
 # --------------------------------
 # Unreal game settings
 # --------------------------------
-game_resX = 640
-game_resY = 480
-ue4_winX = 640
-ue4_winY = 480
+game_resX = 860
+game_resY = 640
+ue4_winX = 860
+ue4_winY = 640
 
 # --------------------------------
 # Multi-Modal Input settings

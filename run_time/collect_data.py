@@ -1,7 +1,8 @@
 import os
 
 os.sys.path.insert(0, os.path.abspath('../settings_folder'))
-
+import tensorflow as tf
+tf.compat.v1.disable_eager_execution()
 import settings
 import ddpg_airsim
 import dqn_airsim
@@ -94,8 +95,12 @@ def main():
     model_weights_list_to_test = ["C:/workspace/airlearning-rl/data/PPO/zone0/0.hf5"]
 
     task1 = {"task_type": "start_game"}
-    task2 = {"algo": "DDPG", "task_type": "train", "difficulty_level": "hard", "env_name": "AirSimEnv-v42",
-             "weights": model_weights_list_to_test}
+    task2 = {
+        "algo": "DDPG", "task_type": "train",
+        "difficulty_level": "hard",
+        "env_name": "AirSimEnv-v42",
+        "weights": model_weights_list_to_test
+    }
     taskList.append(task1)
     taskList.append(task2)
 
